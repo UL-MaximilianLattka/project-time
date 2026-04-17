@@ -85,7 +85,6 @@ function deleteProject(project: string) {
         color="primary"
         class="w-full justify-between"
         @click="selectProject(project)"
-        :disabled="currentProject === project"
       >
         <template #default>
           <div class="w-full text-left">
