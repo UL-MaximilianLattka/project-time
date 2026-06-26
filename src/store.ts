@@ -36,6 +36,7 @@ export const useProjectTimeStore = createGlobalState(async () => {
   const totalBalance = ref(0)
   const workWeeks = ref<WorkWeek[]>([])
   const recommendedTimestamps = ref<string[]>([])
+  const dayClipboard = ref<Timestamp[] | null>(null)
 
   function getTimestamps(
     allTimestamps: Timestamp[],
@@ -101,6 +102,31 @@ export const useProjectTimeStore = createGlobalState(async () => {
   async function deleteTimestamp(timestamp: Date) {
     await db.delete("data", timestamp)
     await reloadWeek(timestamp)
+  }
+
+  async function copyDayTo(timestamps: Timestamp[], targetDate: Date) {
+    const existingKeys = await db.getAllKeys(
+      "data",
+      IDBKeyRange.bound(targetDate, endOfDay(targetDate)),
+    )
+    for (const key of existingKeys) {
+      await db.delete("data", key)
+    }
+    for (const ts of timestamps) {
+      const newTimestamp = new Date(targetDate)
+      newTimestamp.setHours(
+        ts.timestamp.getHours(),
+        ts.timestamp.getMinutes(),
+        ts.timestamp.getSeconds(),
+        ts.timestamp.getMilliseconds(),
+      )
+      await db.add("data", <Timestamp>{
+        timestamp: newTimestamp,
+        project: ts.project,
+        description: ts.description,
+      })
+    }
+    await reloadWeek(targetDate)
   }
 
   function updateBalances() {
@@ -278,6 +304,7 @@ export const useProjectTimeStore = createGlobalState(async () => {
     workWeeks,
     totalBalance,
     recommendedTimestamps,
+    dayClipboard,
     loadTimestamps,
     getTimestampsFromDb,
     addTimestamp,
@@ -285,6 +312,7 @@ export const useProjectTimeStore = createGlobalState(async () => {
     updateDescription,
     updateTimestamp,
     deleteTimestamp,
+    copyDayTo,
     deleteOldData,
   }
 })

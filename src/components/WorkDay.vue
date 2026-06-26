@@ -8,7 +8,7 @@ const { day } = defineProps<{
   day: Workday
 }>()
 
-const { addTimestamp } = await useProjectTimeStore()
+const { addTimestamp, copyDayTo, dayClipboard } = await useProjectTimeStore()
 const workHoursPerDay = useLocalStorage("workHoursPerDay", 0)
 
 const colorMode = useColorMode()
@@ -63,6 +63,15 @@ function formatDate(date: Date) {
     day: "2-digit",
   })
 }
+
+function copyDay(day: Workday) {
+  dayClipboard.value = day.timestamps
+}
+
+async function pasteDay(day: Workday) {
+  if (!dayClipboard.value) return
+  await copyDayTo(dayClipboard.value, day.date)
+}
 </script>
 
 <template>
@@ -93,13 +102,31 @@ function formatDate(date: Date) {
           color-negative="text-red-600"
         />
       </div>
-      <UButton
-        icon="fa7-solid:plus"
-        label="Add new"
-        variant="subtle"
-        color="neutral"
-        @click="addRow(day)"
-      />
+      <div class="flex flex-row items-center gap-1">
+        <UButton
+          icon="fa7-solid:plus"
+          label="Add new"
+          variant="subtle"
+          color="neutral"
+          @click="addRow(day)"
+        />
+        <UButton
+          icon="fa7-solid:copy"
+          label="Copy"
+          variant="subtle"
+          color="neutral"
+          :disabled="day.timestamps.length === 0"
+          @click="copyDay(day)"
+        />
+        <UButton
+          icon="fa7-solid:paste"
+          label="Paste"
+          variant="subtle"
+          color="neutral"
+          :disabled="!dayClipboard"
+          @click="pasteDay(day)"
+        />
+      </div>
     </template>
     <template #footer>
       <div class="flex gap-5 px-2 items-center w-full">
